@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>🎬 Movie Finder</title>
+  <style>
+    :root {
+      --bg:#0b1220;--card:#111a2b;--text:#e8edf7;--muted:#99a3b3;--accent:#2a6cf7;
+    }
+    body {margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui}
+    .container {max-width:800px;margin:40px auto;padding:0 16px}
+    h1 {text-align:center;font-size:28px;margin-bottom:20px}
+    form {display:flex;gap:8px;justify-content:center;margin-bottom:20px}
+    input {flex:1;padding:10px;border-radius:8px;border:1px solid #22314d;background:#0d1626;color:var(--text)}
+    button {padding:10px 16px;border-radius:8px;border:0;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+    .grid {display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+    .card {background:var(--card);border:1px solid #233150;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+    .card img {width:100%;height:320px;object-fit:cover}
+    .card .info {padding:12px;flex:1;display:flex;flex-direction:column;justify-content:space-between}
+    .card h3 {margin:0 0 8px;font-size:18px}
+    .card p {margin:0;font-size:14px;color:var(--muted)}
+    .error {color:#ff7b7b;text-align:center;margin-top:20px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎬 Movie Finder</h1>
+    <form id="searchForm">
+      <input id="query" type="text" placeholder="Film adı girin (örn. Inception)" required />
+      <button type="submit">Ara</button>
+    </form>
+    <div id="results" class="grid"></div>
+    <div id="error" class="error"></div>
+  </div>
+
+<script>
+  const form = document.getElementById('searchForm');
+  const queryInput = document.getElementById('query');
+  const resultsEl = document.getElementById('results');
+  const errorEl = document.getElementById('error');
+
+ const API_KEY = import.meta.env.VITE_OMDB_API_KEY;
+
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const q = queryInput.value.trim();
+    if(!q) return;
+    resultsEl.innerHTML = "";
+    errorEl.textContent = "Aranıyor...";
+
+    try {
+      const res = await fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&s=${encodeURIComponent(q)}`);
+      const data = await res.json();
+
+      if(data.Response === "False") {
+        errorEl.textContent = "Sonuç bulunamadı.";
+        return;
+      }
+
+      errorEl.textContent = "";
+      resultsEl.innerHTML = data.Search.map(movie => `
+        <div class="card">
+          <img src="${movie.Poster !== "N/A" ? movie.Poster : "https://via.placeholder.com/300x450?text=No+Image"}" alt="${movie.Title}">
+          <div class="info">
+            <h3>${movie.Title}</h3>
+            <p>📅 ${movie.Year}</p>
+            <p>🎞️ Tür: ${movie.Type}</p>
+          </div>
+        </div>
+      `).join("");
+    } catch(err) {
+      console.error(err);
+      errorEl.textContent = "Hata oluştu. İnternet ve API key kontrol edin.";
+    }
+  });
+</script>
+</body>
+</html>
